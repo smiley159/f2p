@@ -27,14 +27,18 @@ function App() {
   const [bobBalance, setBobBalance] = useState(0)
 
   const [tokenContract, setTokenContract] = useState(null)
+  const [poolContract, setPoolContract] = useState(null)
 
   // console.log("BNB ABI", BNB.abi)
 
   useEffect(async () => {
 
-    let contract = await new window.web3.eth.Contract(BNB.abi, bnbAddress)
-    setTokenContract(contract)
+    let _tokenContract = await new window.web3.eth.Contract(BNB.abi, bnbAddress)
+    let _poolContract = await new window.web3.eth.Contract(BPool.abi, BPoolAddress)
 
+    console.log(_poolContract, "PCONTRACT")
+    setTokenContract(_tokenContract)
+    setPoolContract(_poolContract)
   }, [])
 
   useEffect(async () => {
@@ -60,9 +64,9 @@ function App() {
         process.exit(1)
       }
 
-      console.log('Event', event)
+      // console.log('Event', event)
       if (event.event === "Transfer") {
-        console.log("EVENT TRANSFER")
+        // console.log("EVENT TRANSFER")
         updateUserBalance()
       }
 
@@ -120,8 +124,7 @@ function App() {
         <br></br>
         Bob Balance: {bobBalance}
 
-
-        <BettingOdd pool={BPool} token={BNB} />
+        <BettingOdd pool={poolContract} token={tokenContract} />
 
       </Container>
     </div>

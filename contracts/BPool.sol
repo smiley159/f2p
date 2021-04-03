@@ -8,11 +8,13 @@ contract BPool {
     address token_; // Accepted token of this pool
     IERC20 token;
 
-    uint256 totalBetUp; // amount of token bet up
-    uint256 totalBetDown;
+    uint256 public totalBetUp; // amount of token bet up
+    uint256 public totalBetDown;
     // amount of token bet down
     mapping(address => uint256) betUpBalances;
     mapping(address => uint256) betDownBalances;
+
+    event betEvent(string side, address indexed from, uint256 amount);
 
     uint256 startBlock; // Block of starting Price
     uint256 endBlock; // Block of ending price
@@ -23,6 +25,8 @@ contract BPool {
         owner = msg.sender;
         token_ = _token;
         token = IERC20(_token);
+        startBlock = block.number + 10000;
+        endBlock = block.number + 20000;
     }
 
     modifier onlyBeforeStart() {
@@ -48,14 +52,15 @@ contract BPool {
         if (_up) {
             betUpBalances[msg.sender] += _amount;
             totalBetUp += _amount;
+            emit betEvent("up", msg.sender, totalBetUp);
         } else {
             betDownBalances[msg.sender] += _amount;
             totalBetDown += _amount;
+            emit betEvent("down", msg.sender, totalBetDown);
         }
     }
 
     // owner judge the result
-
     function judge() public onlyAfterEnd {}
 
     //return odd of the current betting pairs
