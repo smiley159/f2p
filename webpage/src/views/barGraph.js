@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { Button } from 'semantic-ui-react'
 import { Bar } from 'react-chartjs-2'
 import 'chartjs-plugin-datalabels';
 
@@ -15,21 +16,21 @@ const options = {
     ],
   },
   plugins: {
-    // datalabels: {
-    //   display: ctx => {
-    //     return true;
-    //   },
-    //   formatter: (ctx, data) => {
-    //     console.log("DATA", data)
-    //     return `${data.dataIndex}`;
-    //   }
-    // }
-    plugins: {
-      datalabels: {
-        display: true,
-        color: 'red'
+    datalabels: {
+      display: ctx => {
+        return true;
+      },
+      formatter: (ctx, data) => {
+        console.log("DATA", data)
+        return `${data.dataset.data[data.dataIndex]}`;
       }
     }
+    // plugins: {
+    //   datalabels: {
+    //     display: true,
+    //     color: 'red'
+    //   }
+    // }
   }
 }
 
@@ -68,7 +69,7 @@ const BarGraph = (props) => {
   return (
     <>
       <div className='header'>
-        <h1 className='title'>BNB Betting Pool</h1>
+        {/* <h1 className='title'>BNB Betting Pool</h1> */}
         <div className='links'>
           <a
             className='btn btn-gh'

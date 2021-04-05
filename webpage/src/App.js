@@ -1,6 +1,7 @@
 
 import Home from './views/home.js'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
+import { Container, Button } from 'semantic-ui-react'
 
 import './App.css';
 import 'semantic-ui-css/semantic.min.css'
@@ -12,21 +13,20 @@ import { useEffect, useState, React } from 'react'
 
 function App() {
 
-
+  let state = useSelector(state => state)
   const dispatch = useDispatch()
-  const [ready, setReady] = useState(false)
 
   window.ethereum.on('accountsChanged', function (accounts) {
     getAccounts()
 
   })
 
+
   const ethEnabled = () => {
     if (window.ethereum) {
       window.web3 = new Web3(window.ethereum);
       window.ethereum.enable().then(async () => {
         await getAccounts()
-        setReady(true)
         dispatch({ type: "setState", web3Ready: true })
       })
       return true;
@@ -46,14 +46,20 @@ function App() {
 
 
   useEffect(() => {
-    ethEnabled()
-    getAccounts()
+    // ethEnabled()
+    // getAccounts()
 
-  }, [])
+  }, [state.web3Ready])
 
   return (
-    <div className="App">
-      {ready ? <Home /> : null}
+    <div className="App" style={{ margin: 20 }}>
+      <Button onClick={() => ethEnabled()} basic color='orange'>
+        {state.web3Ready ? state.account : "connect"}
+      </Button>
+      <br></br>
+      <br></br>
+
+      {state.web3Ready ? <Home /> : null}
     </div>
   );
 }

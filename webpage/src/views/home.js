@@ -105,29 +105,29 @@ function App() {
   }
 
   return (
-    <div style={{ margin: 20 }}>
-      <Container>
-        <h4>{state.account}</h4>
-        <Button primary onClick={() => mint(alice)}>
-          Mint Alice
+
+    <Container>
+
+      <Button primary onClick={() => mint(alice)}>
+        Mint Alice
       </Button>
-        <Button primary onClick={() => mint(bob)}>
-          Mint Bob
+      <Button primary onClick={() => mint(bob)}>
+        Mint Bob
       </Button>
-        <Button primary onClick={approve}>
-          Approve
+      <Button primary onClick={approve}>
+        Approve
       </Button>
-        <br></br>
+      <br></br>
         User Balance: {userBalance}
-        <br></br>
+      <br></br>
         Alice Balance: {aliceBalance}
-        <br></br>
+      <br></br>
         Bob Balance: {bobBalance}
 
-        <BettingOdd pool={poolContract} token={tokenContract} />
+      <BettingOdd pool={poolContract} token={tokenContract} />
 
-      </Container>
-    </div>
+    </Container>
+
   );
 }
 

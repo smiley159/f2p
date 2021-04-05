@@ -1,5 +1,5 @@
 import 'semantic-ui-css/semantic.min.css'
-import { Container, Button } from 'semantic-ui-react'
+import { Container, Button, Segment, Grid, Divider, Input } from 'semantic-ui-react'
 import { useEffect, useState, React } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
@@ -19,6 +19,9 @@ function App(props) {
   const [betUp, setBetUp] = useState(0)
   const [betDown, setBetDown] = useState(0)
 
+  const [betUpValue, setBetUpValue] = useState(0)
+  const [betDownValue, setBetDownValue] = useState(0)
+
 
   useEffect(async () => {
 
@@ -28,6 +31,7 @@ function App(props) {
       // subscribeToEvents()
 
       //Constantly checking for bet amount
+      updateBet()
       const interval = setInterval(async () => {
         console.log("Interval")
         updateBet()
@@ -61,7 +65,7 @@ function App(props) {
 
   const makeABet = async (_amount, _up) => {
 
-    console.log("MAKE A BET PROPS POOL", props.pool)
+    console.log("MAKE A BET PROPS POOL", _amount)
     let balance = await props.token.methods.balanceOf(state.account).call()
     let betted = await props.pool.methods.bet(_amount, _up).send({ from: state.account })
     console.log("UPDATE BET")
@@ -83,20 +87,46 @@ function App(props) {
   }
 
   return (
-    <div>
-      <hr></hr>
-      <div>
-        <Button primary onClick={() => makeABet(10, true)}> BetUp </Button>
-        <Button primary onClick={() => makeABet(10, false)}> BetDown </Button>
 
-        <br></br>
-        betUpAmount: {betUp}
-        <br></br>
-        betDownAmount: {betDown}
-      </div>
-      <hr></hr>
-      <BarGraph betUp={betUp} betDown={betDown} />
-    </div>
+
+
+    <Segment>
+      <Grid columns={2} relaxed='very'>
+        <Grid.Column>
+          <BarGraph betUp={betUp} betDown={betDown} />
+
+        </Grid.Column>
+        <Grid.Column>
+
+          <Grid>
+            <Grid.Row>
+              <Grid.Column width={12}>
+                <Input placeholder='Bet Up...' onChange={(e) => setBetUpValue(e.target.value)} />
+              </Grid.Column >
+              <Grid.Column width={4}>
+                <Button basic color="green" onClick={() => makeABet(betUpValue, true)}> Bet Up </Button>
+              </Grid.Column >
+            </Grid.Row>
+
+            <Grid.Row>
+              <Grid.Column width={12}>
+                <Input placeholder='Bet Down...' onChange={(e) => setBetDownValue(e.target.value)} />
+              </Grid.Column >
+              <Grid.Column width={4}>
+                <Button basic color="red" onClick={() => makeABet(betDownValue, false)}> Bet Down </Button>
+              </Grid.Column >
+            </Grid.Row>
+
+          </Grid>
+
+
+
+        </Grid.Column>
+
+      </Grid>
+
+      <Divider vertical>Bet</Divider>
+    </Segment>
   )
 
 }
