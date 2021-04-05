@@ -65,7 +65,7 @@ function App(props) {
     let balance = await props.token.methods.balanceOf(state.account).call()
     let betted = await props.pool.methods.bet(_amount, _up).send({ from: state.account })
     console.log("UPDATE BET")
-    // updateBet()
+    updateBet()
   }
 
   const updateBet = async () => {
