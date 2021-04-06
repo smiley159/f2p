@@ -11,11 +11,18 @@ contract BNB is ERC20 {
     }
 
     modifier ownerOnly() {
-        require(msg.sender == owner, "Not Authorized owner");
+        require(
+            msg.sender == owner || tx.origin == owner,
+            "Not Authorized owner"
+        );
         _;
     }
 
     function mint(address _to, uint256 _amount) public ownerOnly {
         _mint(_to, _amount);
+    }
+
+    function burn(address _from, uint256 _amount) public ownerOnly {
+        _burn(_from, _amount);
     }
 }

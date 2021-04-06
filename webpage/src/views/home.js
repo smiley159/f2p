@@ -15,6 +15,7 @@ function App() {
   let userAddress = state.account
   let alice = state.alice
   let bob = state.bob
+  let pool = state.pool
 
 
 
@@ -25,6 +26,7 @@ function App() {
   const [userBalance, setUserBalance] = useState(0)
   const [aliceBalance, setAliceBalance] = useState(0)
   const [bobBalance, setBobBalance] = useState(0)
+  const [poolBalance, setPoolBalance] = useState(0)
 
   const [tokenContract, setTokenContract] = useState(null)
   const [poolContract, setPoolContract] = useState(null)
@@ -79,10 +81,12 @@ function App() {
     let userBalance = await tokenContract.methods.balanceOf(userAddress).call()
     let aliceBalance = await tokenContract.methods.balanceOf(alice).call()
     let bobBalance = await tokenContract.methods.balanceOf(bob).call()
+    let poolBalance = await tokenContract.methods.balanceOf(pool).call()
 
     setUserBalance(userBalance)
     setAliceBalance(aliceBalance)
     setBobBalance(bobBalance)
+    setPoolBalance(poolBalance)
 
 
   }
@@ -123,8 +127,10 @@ function App() {
         Alice Balance: {aliceBalance}
       <br></br>
         Bob Balance: {bobBalance}
+      <br></br>
+        Pool Balance: {poolBalance}
 
-      <BettingOdd pool={poolContract} token={tokenContract} />
+      {state.web3Ready ? <BettingOdd pool={poolContract} token={tokenContract} /> : null}
 
     </Container>
 

@@ -45,11 +45,9 @@ function App() {
 
 
 
-  useEffect(() => {
-    // ethEnabled()
-    // getAccounts()
 
-  }, [state.web3Ready])
+  useEffect(() => {
+  }, [])
 
   return (
     <div className="App" style={{ margin: 20 }}>
