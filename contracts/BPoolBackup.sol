@@ -3,33 +3,15 @@
 pragma solidity >= 0.4 .22 < 0.9.0;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./Bnb.sol";
-import "./Blt.sol";
 
-contract BPool {
+contract BPoolBackup {
     //User can make a bet by using BNB
 
     address public owner; // onwer of contract
     address token_; // Accepted token of this pool
     BNB token;
-    Blt bltUp;
-    Blt bltDown;
 
     uint public currentRound; // current round of binary pool
-
-    enum Status {COMPLETED,BETTING,PENDING}
-
-    struct poolInfo {
-        uint roundId;
-        uint startBlock;
-        uint endBlock;
-        uint startPrice;
-        uint endPrice;
-        uint totalBetUp;
-        uint totalBetDown;
-        Status status;
-    }
-
-    mapping(uint => poolInfo) poolRecords;
     
 
     uint256 public totalBetUp; // amount of token bet up
@@ -56,12 +38,10 @@ contract BPool {
 
     event betEvent(string side, address indexed from, uint256 amount);
 
-    constructor(address _token,address _bltUp,address _bltDown) {
+    constructor(address _token) {
         owner = msg.sender;
         token_ = _token;
         token = BNB(_token);
-        bltUp = Blt(_bltUp);
-        bltDown = Blt(_bltDown);
 
         //Dummy
         startBlock = block.number + 10000;
@@ -81,19 +61,6 @@ contract BPool {
         _;
     }
 
-    function startNewRound(){
-        //get end price for the previous round / start price for the current round
-        uint endPrice = getPrice();
-        uint endBlock = block.number;
-        
-        poolRecords[currentRound-1].endPrice = endPrice;
-        poolRecords[currentRound-1].endBlock = endBlock;
-        poolRecords[currentRound].startPrice = endPrice;
-        poolRecords[currentRound].startBlock = endBlock;
-
-        currentRound += 1;
-    }
-
     // user make a bet
     function bet(uint256 _amount, bool _up) public onlyBeforeStart {
         require(
@@ -105,18 +72,16 @@ contract BPool {
         require(success, "Transfer Failed");
 
         if (_up) {
-            // if (betUpBalances[msg.sender] == 0) betUpIndices.push(msg.sender);
+            if (betUpBalances[msg.sender] == 0) betUpIndices.push(msg.sender);
 
-            // betUpBalances[msg.sender] += _amount;
-            // totalBetUp += _amount;
-            bltUp.mint(msg.sender,currentRound,_amount,"");
+            betUpBalances[msg.sender] += _amount;
+            totalBetUp += _amount;
             emit betEvent("up", msg.sender, totalBetUp);
         } else {
-            // if (betDownBalances[msg.sender] == 0)
-            //     betDownIndices.push(msg.sender);
-            // betDownBalances[msg.sender] += _amount;
-            // totalBetDown += _amount;
-            bltDown.mint(msg.sender,currentRound,_amount,"");
+            if (betDownBalances[msg.sender] == 0)
+                betDownIndices.push(msg.sender);
+            betDownBalances[msg.sender] += _amount;
+            totalBetDown += _amount;
             emit betEvent("down", msg.sender, totalBetDown);
         }
     }
