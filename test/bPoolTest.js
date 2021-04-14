@@ -48,7 +48,7 @@ contract("Blt", async (accounts) => {
 
   it("Start a betting Round", async () => {
     let bPool = await BPool.deployed();
-    await bPool.startNewRound()
+    await bPool.endCurrentRound()
   })
 
   it("Alice will make a bet up, Bob will bet down", async () => {
@@ -69,12 +69,12 @@ contract("Blt", async (accounts) => {
     let bltDown = await BltDown.deployed();
 
 
-    let currentRound = await bPool.currentRound()
+    let currentPoolID = await bPool.currentPoolID()
     
-    assert.equal(5000, await bltUp.balanceOf(alice,currentRound))
-    assert.equal(0, await bltDown.balanceOf(alice,currentRound))
-    assert.equal(0, await bltUp.balanceOf(bob,currentRound))
-    assert.equal(3000, await bltDown.balanceOf(bob,currentRound))
+    assert.equal(5000, await bltUp.balanceOf(alice,currentPoolID))
+    assert.equal(0, await bltDown.balanceOf(alice,currentPoolID))
+    assert.equal(0, await bltUp.balanceOf(bob,currentPoolID))
+    assert.equal(3000, await bltDown.balanceOf(bob,currentPoolID))
 
   })
 

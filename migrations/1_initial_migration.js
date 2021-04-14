@@ -1,5 +1,4 @@
 const Migrations = artifacts.require("Migrations");
-const Pool = artifacts.require("Pool");
 const BPool = artifacts.require("BPool");
 const Bnb = artifacts.require("Bnb");
 const Busd = artifacts.require("Busd");;

@@ -30,5 +30,10 @@ contract Blt is ERC1155 {
 
     }
 
+      function burn(address account, uint256 id, uint256 amount) public ownerOnly {
+        _burn(account, id, amount);
+
+    }
+
 
 }

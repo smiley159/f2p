@@ -14,12 +14,12 @@ contract BPool {
     Blt bltUp;
     Blt bltDown;
 
-    uint public currentRound; // current round of binary pool
+    uint public currentPoolID = 1; // current round of binary pool
 
     enum Status {COMPLETED,BETTING,PENDING}
 
     struct poolInfo {
-        uint roundId;
+        uint poolID;
         uint startBlock;
         uint endBlock;
         uint startPrice;
@@ -34,23 +34,7 @@ contract BPool {
 
     uint256 public totalBetUp; // amount of token bet up
     uint256 public totalBetDown;
-    // amount of token bet down
-    mapping(address => uint256) betUpBalances;
-    address[] betUpIndices;
-
-    mapping(address => uint256) betDownBalances;
-    address[] betDownIndices;
-
-
-
-    uint256 public startBlock; // Block of starting Price
-    uint256 public endBlock; // Block of ending price
-
-    uint256 public startPrice; // Block of starting Price
-    uint256 public endPrice; // Block of ending price
-
-    bool public isUpWin; // Whether bet Up or bet Down Won
-    bool isActive = true;
+ 
 
     //EVENTS
 
@@ -63,35 +47,36 @@ contract BPool {
         bltUp = Blt(_bltUp);
         bltDown = Blt(_bltDown);
 
-        //Dummy
-        startBlock = block.number + 10000;
-        endBlock = block.number + 20000;
-
-        startPrice = getPrice(100) / token.decimals();
-        endPrice = getPrice(200) / token.decimals();
     }
 
     modifier onlyBeforeStart() {
-        require(block.number < startBlock, "Invalid after round has started");
+        // require(block.number < startBlock, "Invalid after round has started");
         _;
     }
 
     modifier onlyAfterEnd() {
-        require(block.number > endBlock, "Invalid before round has ended");
+        // require(block.number > endBlock, "Invalid before round has ended");
         _;
     }
 
-    function startNewRound(){
+    function endCurrentRound() public{
         //get end price for the previous round / start price for the current round
-        uint endPrice = getPrice();
-        uint endBlock = block.number;
+        //betting end for the current round and start for the next round
+        uint _endPrice = getPrice(100);
+        uint _endBlock = block.number;
         
-        poolRecords[currentRound-1].endPrice = endPrice;
-        poolRecords[currentRound-1].endBlock = endBlock;
-        poolRecords[currentRound].startPrice = endPrice;
-        poolRecords[currentRound].startBlock = endBlock;
+        poolRecords[currentPoolID-1].endPrice = _endPrice;
+        poolRecords[currentPoolID-1].endBlock = _endBlock;
+        poolRecords[currentPoolID-1].status = Status.COMPLETED;
+        poolRecords[currentPoolID].startPrice = _endPrice;
+        poolRecords[currentPoolID].startBlock = _endBlock;
+        poolRecords[currentPoolID].status = Status.PENDING;
 
-        currentRound += 1;
+        burnLosingToken();
+
+        poolRecords[currentPoolID+1].status = Status.BETTING;
+
+        currentPoolID += 1;
     }
 
     // user make a bet
@@ -105,68 +90,55 @@ contract BPool {
         require(success, "Transfer Failed");
 
         if (_up) {
-            // if (betUpBalances[msg.sender] == 0) betUpIndices.push(msg.sender);
-
-            // betUpBalances[msg.sender] += _amount;
-            // totalBetUp += _amount;
-            bltUp.mint(msg.sender,currentRound,_amount,"");
+           
+            poolRecords[currentPoolID+1].totalBetUp += _amount;
+            bltUp.mint(msg.sender,currentPoolID,_amount,"");
             emit betEvent("up", msg.sender, totalBetUp);
         } else {
-            // if (betDownBalances[msg.sender] == 0)
-            //     betDownIndices.push(msg.sender);
-            // betDownBalances[msg.sender] += _amount;
-            // totalBetDown += _amount;
-            bltDown.mint(msg.sender,currentRound,_amount,"");
+        
+            poolRecords[currentPoolID+1].totalBetDown += _amount;
+            bltDown.mint(msg.sender,currentPoolID,_amount,"");
             emit betEvent("down", msg.sender, totalBetDown);
         }
     }
 
     // owner judge the result
-    function judge() public {
-        require(isActive, "Pool is no longer active");
-        uint256 burnAmount;
-        if (startPrice > endPrice) {
-            isUpWin = false;
-            burnAmount = totalBetUp;
-        } else {
-            isUpWin = true;
-            burnAmount = totalBetDown;
+    function burnLosingToken() internal {
+        uint startPrice = poolRecords[currentPoolID-1].startPrice;
+        uint endPrice = poolRecords[currentPoolID-1].endPrice;
+        bool isUpWin = endPrice > startPrice;
+        if(isUpWin){
+            token.burn(address(this),poolRecords[currentPoolID-1].totalBetDown);
+        }else{
+            token.burn(address(this),poolRecords[currentPoolID-1].totalBetUp);
         }
 
-        //Transfer token to treasuries address at 2% of total Burn
-
-        token.burn(address(this), (burnAmount * 98) / 100);
-        // token.transfer(owner, (burnAmount * 2) / 100);
-        isActive = false;
-
-        // Mint Token to winner
-        //Burn token of loser we just burn
-        //Redirect Portion of Burn to Treasuries
     }
 
-    function claim() public {
-        uint256 claimable;
-        if (isUpWin) {
-            claimable = betUpBalances[msg.sender];
-            betUpBalances[msg.sender] = 0;
-        } else {
-            claimable = betDownBalances[msg.sender];
-            betDownBalances[msg.sender] = 0;
-        }
-        require(claimable > 0, "No Reward to Claim");
-        token.mint(msg.sender, claimable);
-        token.transfer(msg.sender, claimable);
+
+    function claim() public { 
+        // uint256 claimable;
+        // if (isUpWin) {
+        //     claimable = betUpBalances[msg.sender];
+        //     betUpBalances[msg.sender] = 0;
+        // } else {
+        //     claimable = betDownBalances[msg.sender];
+        //     betDownBalances[msg.sender] = 0;
+        // }
+        // require(claimable > 0, "No Reward to Claim");
+        // token.mint(msg.sender, claimable);
+        // token.transfer(msg.sender, claimable);
     }
 
     function getClaimable() public view returns(uint256) {
-        uint256 claimable;
-        if (isUpWin) {
-            claimable = betUpBalances[msg.sender];
-        } else {
-            claimable = betDownBalances[msg.sender];
-        }
+        // uint256 claimable;
+        // if (isUpWin) {
+        //     claimable = betUpBalances[msg.sender];
+        // } else {
+        //     claimable = betDownBalances[msg.sender];
+        // }
 
-        return claimable * 2;
+        // return claimable * 2;
     }
 
     //return odd of the current betting pairs
