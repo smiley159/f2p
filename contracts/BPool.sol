@@ -34,6 +34,9 @@ contract BPool {
 
     uint256 public totalBetUp; // amount of token bet up
     uint256 public totalBetDown;
+    
+    uint256 public burningRate; // Intended Burning rate per round
+    uint256 public treasuriesFee; // Portion of Burning that goes to treasuries
  
 
     //EVENTS
