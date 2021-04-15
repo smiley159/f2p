@@ -46,7 +46,7 @@ contract("Blt", async (accounts) => {
 
   })
 
-  it("Start a betting Round", async () => {
+  it("Start 1st betting Round", async () => {
     let bPool = await BPool.deployed();
     await bPool.endCurrentRound()
   })
@@ -60,6 +60,17 @@ contract("Blt", async (accounts) => {
     await bPool.bet(3000,false,{from:bob})
 
   })
+
+ 
+
+  //Burning rate 0%
+  //Fee 0%
+  // Round ended
+  // Price Goes up
+  // alice claim token return 10000
+  // Burn BLT up
+  // Bob claim token return 0
+  // Burn BLT down
 
 
   it("Check Blt token of Alice and Bob", async () => {
@@ -76,6 +87,17 @@ contract("Blt", async (accounts) => {
     assert.equal(0, await bltUp.balanceOf(bob,currentPoolID))
     assert.equal(3000, await bltDown.balanceOf(bob,currentPoolID))
 
+  })
+
+  it("Start 2nd betting Round", async () => {
+    let bPool = await BPool.deployed();
+    await bPool.endCurrentRound()
+    console.log("PRICe",await bPool.getPrice(1), await bPool.getPrice(2))
+  })
+
+  it("Bob and alice try to claim rewards", async () => {
+    // let bPool = await BPool.deployed();
+    // await bPool.endCurrentRound()
   })
 
 

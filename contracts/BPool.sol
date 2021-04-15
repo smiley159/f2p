@@ -65,7 +65,7 @@ contract BPool {
     function endCurrentRound() public{
         //get end price for the previous round / start price for the current round
         //betting end for the current round and start for the next round
-        uint _endPrice = getPrice(100);
+        uint _endPrice = getPrice(block.number);
         uint _endBlock = block.number;
         
         poolRecords[currentPoolID-1].endPrice = _endPrice;
@@ -105,11 +105,17 @@ contract BPool {
         }
     }
 
-    // owner judge the result
-    function burnLosingToken() internal {
-        uint startPrice = poolRecords[currentPoolID-1].startPrice;
+    function getPoolResult(uint _poolID) returns(uint){
+        require(_poolID < currentPoolID, "Pool not ended yet");
+         uint startPrice = poolRecords[currentPoolID-1].startPrice;
         uint endPrice = poolRecords[currentPoolID-1].endPrice;
         bool isUpWin = endPrice > startPrice;
+        return(isUpWin);
+    }
+
+    // owner judge the result
+    function burnLosingToken() internal {
+       uint isUpWin = getPoolResult(currentPoolID-1);
         if(isUpWin){
             token.burn(address(this),poolRecords[currentPoolID-1].totalBetDown);
         }else{
@@ -120,14 +126,17 @@ contract BPool {
 
 
     function claim() public { 
-        // uint256 claimable;
-        // if (isUpWin) {
-        //     claimable = betUpBalances[msg.sender];
-        //     betUpBalances[msg.sender] = 0;
-        // } else {
-        //     claimable = betDownBalances[msg.sender];
-        //     betDownBalances[msg.sender] = 0;
-        // }
+
+        uint isUpWin = getPoolResult(currentPoolID-1);
+
+        uint claimable;
+        if (isUpWin) {
+            claimable = betUpBalances[msg.sender];
+            betUpBalances[msg.sender] = 0;
+        } else {
+            claimable = betDownBalances[msg.sender];
+            betDownBalances[msg.sender] = 0;
+        }
         // require(claimable > 0, "No Reward to Claim");
         // token.mint(msg.sender, claimable);
         // token.transfer(msg.sender, claimable);
@@ -152,18 +161,19 @@ contract BPool {
 
     // Get latest price of the undelying betting token
     function getPrice(uint256 seed) public view returns(uint256) {
-        uint256 price =
-            uint256(
-                keccak256(
-                    (
-                        abi.encodePacked(
-                            blockhash(block.number - 1),
-                            block.timestamp,
-                            seed
-                        )
-                    )
-                )
-            );
-        return price;
+        return seed;
+        // uint256 price =
+        //     uint256(
+        //         keccak256(
+        //             (
+        //                 abi.encodePacked(
+        //                     blockhash(block.number - 1),
+        //                     block.timestamp,
+        //                     seed
+        //                 )
+        //             )
+        //         )
+        //     );
+        // return price;
     }
 }
