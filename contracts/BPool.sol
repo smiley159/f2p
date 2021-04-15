@@ -125,14 +125,15 @@ contract BPool {
     }
 
 
-    function claim() public { 
+    function claim(_poolID) public { 
 
-        uint isUpWin = getPoolResult(currentPoolID-1);
+        uint isUpWin = getPoolResult(_poolID);
 
         uint claimable;
         if (isUpWin) {
-            claimable = betUpBalances[msg.sender];
-            betUpBalances[msg.sender] = 0;
+            claimable = bltUp.balanceOf(msg.sender,_poolID);
+            bltUp.burn(msg.sender,_poolID,claimaBle);
+            token.mint(msg.sender,claiz)
         } else {
             claimable = betDownBalances[msg.sender];
             betDownBalances[msg.sender] = 0;
