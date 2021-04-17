@@ -34,14 +34,31 @@ contract BPool {
 
     uint256 public totalBetUp; // amount of token bet up
     uint256 public totalBetDown;
+    uint256 public totalWin; // amount of token bet up
+    uint256 public totalLose;
     
-    uint256 public burningRate; // Intended Burning rate per round
+  
+
+    //Parameters
+
+    uint public alpha ; // ratio of wining minting rewards reroutig to burn
+    uint256 public burningRate; // Intended Burning rate of total betting per round 
     uint256 public treasuriesFee; // Portion of Burning that goes to treasuries
+
+
  
 
     //EVENTS
 
+    event Log(string log,uint value);
+
     event betEvent(string side, address indexed from, uint256 amount);
+
+    event ClaimEvent(bool isUpWin,address account,uint poolID, uint256 amount);
+
+    event Alpha(uint alpha);
+
+    //Constructor
 
     constructor(address _token,address _bltUp,address _bltDown) {
         owner = msg.sender;
@@ -49,41 +66,76 @@ contract BPool {
         token = BNB(_token);
         bltUp = Blt(_bltUp);
         bltDown = Blt(_bltDown);
+        burningRate = 5;
+        totalWin = 10000;
+        totalLose = 10000;
 
     }
 
-    modifier onlyBeforeStart() {
-        // require(block.number < startBlock, "Invalid after round has started");
-        _;
+    //Update Parameter
+
+    function updateBurningRate(uint _burningRate)  public  {
+        burningRate = _burningRate;
     }
 
-    modifier onlyAfterEnd() {
-        // require(block.number > endBlock, "Invalid before round has ended");
-        _;
+    function updateAlpha() internal  {
+        // uint pWin = totalWin/(totalWin+totalLose);
+        emit Log("Total Win",totalWin);
+        emit Log("Total Lose",totalLose);
+       
+        uint pWin = totalWin*100/(totalWin+totalLose);
+        alpha = 100*(100-burningRate-pWin)/pWin;
+
+        emit Alpha(alpha);
+
+
+      
     }
 
     function endCurrentRound() public{
         //get end price for the previous round / start price for the current round
         //betting end for the current round and start for the next round
-        uint _endPrice = getPrice(block.number);
-        uint _endBlock = block.number;
-        
-        poolRecords[currentPoolID-1].endPrice = _endPrice;
-        poolRecords[currentPoolID-1].endBlock = _endBlock;
-        poolRecords[currentPoolID-1].status = Status.COMPLETED;
-        poolRecords[currentPoolID].startPrice = _endPrice;
-        poolRecords[currentPoolID].startBlock = _endBlock;
-        poolRecords[currentPoolID].status = Status.PENDING;
-
-        burnLosingToken();
-
-        poolRecords[currentPoolID+1].status = Status.BETTING;
-
         currentPoolID += 1;
+        uint _endBlock = block.number;
+        uint _endPrice = getPrice(_endBlock);
+        
+        
+        poolRecords[currentPoolID-2].endPrice = _endPrice;
+        poolRecords[currentPoolID-2].endBlock = _endBlock;
+        poolRecords[currentPoolID-2].status = Status.COMPLETED;
+        poolRecords[currentPoolID-1].startPrice = _endPrice;
+        poolRecords[currentPoolID-1].startBlock = _endBlock;
+        poolRecords[currentPoolID-1].status = Status.PENDING;
+        poolRecords[currentPoolID].status = Status.BETTING;
+
+        if(currentPoolID >= 2){
+            
+
+            //Update Parameter
+
+            bool isUpWin = getPoolResult(currentPoolID-2);
+            if(isUpWin){
+                totalWin +=  poolRecords[currentPoolID-2].totalBetUp;
+                totalLose +=  poolRecords[currentPoolID-2].totalBetDown;
+            }else{
+                totalWin +=  poolRecords[currentPoolID-2].totalBetDown;
+                totalLose +=  poolRecords[currentPoolID-2].totalBetUp;
+            }
+
+             burnLosingToken(currentPoolID-2);
+             updateAlpha();
+
+        }
+        
+        
+
+        
+
+        
     }
 
     // user make a bet
-    function bet(uint256 _amount, bool _up) public onlyBeforeStart {
+    function bet(uint256 _amount, bool _up) public {
         require(
             token.allowance(msg.sender, address(this)) >= _amount,
             "Not authorized "
@@ -105,39 +157,47 @@ contract BPool {
         }
     }
 
-    function getPoolResult(uint _poolID) returns(uint){
-        require(_poolID < currentPoolID, "Pool not ended yet");
-         uint startPrice = poolRecords[currentPoolID-1].startPrice;
-        uint endPrice = poolRecords[currentPoolID-1].endPrice;
+    function getPoolResult(uint _poolID) public view returns(bool){
+        require(_poolID <= currentPoolID-2, "Pool not ended yet");
+        uint startPrice = poolRecords[_poolID].startPrice;
+        uint endPrice = poolRecords[_poolID].endPrice;
         bool isUpWin = endPrice > startPrice;
         return(isUpWin);
     }
 
     // owner judge the result
-    function burnLosingToken() internal {
-       uint isUpWin = getPoolResult(currentPoolID-1);
+    function burnLosingToken(uint _poolID) internal {
+       bool isUpWin = getPoolResult(_poolID);
         if(isUpWin){
-            token.burn(address(this),poolRecords[currentPoolID-1].totalBetDown);
+            token.burn(address(this),poolRecords[_poolID].totalBetDown);
         }else{
-            token.burn(address(this),poolRecords[currentPoolID-1].totalBetUp);
+            token.burn(address(this),poolRecords[_poolID].totalBetUp);
         }
 
     }
 
 
-    function claim(_poolID) public { 
+    function claim(uint _poolID) public returns(uint _claimable) { 
 
-        uint isUpWin = getPoolResult(_poolID);
-
+        bool isUpWin = getPoolResult(_poolID);
         uint claimable;
+        
         if (isUpWin) {
             claimable = bltUp.balanceOf(msg.sender,_poolID);
-            bltUp.burn(msg.sender,_poolID,claimaBle);
-            token.mint(msg.sender,claiz)
+            bltUp.burn(msg.sender,_poolID,claimable);
+            token.mint(msg.sender,claimable*alpha/100);
+            token.transfer(msg.sender,claimable);
         } else {
-            claimable = betDownBalances[msg.sender];
-            betDownBalances[msg.sender] = 0;
+            claimable = bltDown.balanceOf(msg.sender,_poolID);
+            bltDown.burn(msg.sender,_poolID,claimable);
+            token.mint(msg.sender,claimable*alpha/100);
+            token.transfer(msg.sender,claimable);
+            // claimable = betDownBalances[msg.sender];
+            // betDownBalances[msg.sender] = 0;
         }
+
+        emit ClaimEvent(isUpWin,msg.sender,_poolID,claimable);
+        return (claimable);
         // require(claimable > 0, "No Reward to Claim");
         // token.mint(msg.sender, claimable);
         // token.transfer(msg.sender, claimable);
@@ -161,7 +221,7 @@ contract BPool {
     function getBalance() public {}
 
     // Get latest price of the undelying betting token
-    function getPrice(uint256 seed) public view returns(uint256) {
+    function getPrice(uint256 seed) public pure returns(uint256) {
         return seed;
         // uint256 price =
         //     uint256(
@@ -177,4 +237,6 @@ contract BPool {
         //     );
         // return price;
     }
+
+    // Update Parameter
 }

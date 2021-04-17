@@ -18,11 +18,11 @@ contract BNB is ERC20 {
         _;
     }
 
-    function mint(address _to, uint256 _amount) public ownerOnly {
+    function mint(address _to, uint256 _amount) public {//Todo add allowed minter {
         _mint(_to, _amount);
     }
 
-    function burn(address _from, uint256 _amount) public ownerOnly {
+    function burn(address _from, uint256 _amount) public{ //Todo add allowed burner {
         _burn(_from, _amount);
     }
 }
