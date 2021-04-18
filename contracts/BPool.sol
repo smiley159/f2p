@@ -26,6 +26,7 @@ contract BPool {
         uint endPrice;
         uint totalBetUp;
         uint totalBetDown;
+        uint alpha;
         Status status;
     }
 
@@ -107,6 +108,7 @@ contract BPool {
         poolRecords[currentPoolID-1].startBlock = _endBlock;
         poolRecords[currentPoolID-1].status = Status.PENDING;
         poolRecords[currentPoolID].status = Status.BETTING;
+        
 
         if(currentPoolID >= 2){
             
@@ -123,7 +125,9 @@ contract BPool {
             }
 
              burnLosingToken(currentPoolID-2);
+             
              updateAlpha();
+             poolRecords[currentPoolID].alpha = alpha;
 
         }
         
@@ -180,17 +184,19 @@ contract BPool {
     function claim(uint _poolID) public returns(uint _claimable) { 
 
         bool isUpWin = getPoolResult(_poolID);
+        uint poolAlpha = poolRecords[_poolID].alpha;
         uint claimable;
+
         
         if (isUpWin) {
             claimable = bltUp.balanceOf(msg.sender,_poolID);
             bltUp.burn(msg.sender,_poolID,claimable);
-            token.mint(msg.sender,claimable*alpha/100);
+            token.mint(msg.sender,claimable*poolAlpha/100);
             token.transfer(msg.sender,claimable);
         } else {
             claimable = bltDown.balanceOf(msg.sender,_poolID);
             bltDown.burn(msg.sender,_poolID,claimable);
-            token.mint(msg.sender,claimable*alpha/100);
+            token.mint(msg.sender,claimable*poolAlpha/100);
             token.transfer(msg.sender,claimable);
             // claimable = betDownBalances[msg.sender];
             // betDownBalances[msg.sender] = 0;
