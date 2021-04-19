@@ -6,7 +6,7 @@ import "./Bnb.sol";
 import "./Blt.sol";
 
 contract BPool {
-    //User can make a bet by using BNB
+
 
     address public owner; // onwer of contract
     address token_; // Accepted token of this pool
@@ -14,14 +14,14 @@ contract BPool {
     Blt bltUp;
     Blt bltDown;
 
-    uint public currentPoolID = 1; // current round of binary pool
+    //Structure
 
     enum Status {COMPLETED,BETTING,PENDING}
 
     struct poolInfo {
         uint poolID;
-        uint startBlock;
-        uint endBlock;
+        uint startTime;
+        uint endTime;
         uint startPrice;
         uint endPrice;
         uint totalBetUp;
@@ -31,32 +31,31 @@ contract BPool {
     }
 
     mapping(uint => poolInfo) poolRecords;
+    mapping(address => uint[]) claimableList;
     
+
+    //Parameters
+
+    uint public currentPoolID = 1; // current round of binary pool
+    uint public alpha; // ratio of wining minting rewards reroutig to burn
+    uint256 public burningRate; // Intended Burning rate of total betting per round 
+    uint256 public treasuriesFee; // Portion of Burning that goes to treasuries
+    uint256 public timeFrame; // Minimum secondes required to start a new round
+
+    //Variables
 
     uint256 public totalBetUp; // amount of token bet up
     uint256 public totalBetDown;
     uint256 public totalWin; // amount of token bet up
     uint256 public totalLose;
     
-  
-
-    //Parameters
-
-    uint public alpha ; // ratio of wining minting rewards reroutig to burn
-    uint256 public burningRate; // Intended Burning rate of total betting per round 
-    uint256 public treasuriesFee; // Portion of Burning that goes to treasuries
-
-
  
 
     //EVENTS
 
     event Log(string log,uint value);
-
     event betEvent(string side, address indexed from, uint256 amount);
-
     event ClaimEvent(bool isUpWin,address account,uint poolID, uint256 amount);
-
     event Alpha(uint alpha);
 
     //Constructor
@@ -64,12 +63,13 @@ contract BPool {
     constructor(address _token,address _bltUp,address _bltDown) {
         owner = msg.sender;
         token_ = _token;
-        token = BNB(_token);
-        bltUp = Blt(_bltUp);
-        bltDown = Blt(_bltDown);
-        burningRate = 5;
-        totalWin = 10000;
-        totalLose = 10000;
+        token = BNB(_token); // ERC20 token use for betting
+        bltUp = Blt(_bltUp); // ERC1155 token use for representing betUp amount each round
+        bltDown = Blt(_bltDown); // ERC1155 token use for representing betUp amount each round
+        burningRate = 5; // 5 percent of total pot will be burn each round
+        totalWin = 10000; // seeding value to avoid extreme case eg.divide by zero
+        totalLose = 10000; 
+        timeFrame = 1; // 1 Second for now
 
     }
 
@@ -96,16 +96,18 @@ contract BPool {
     function endCurrentRound() public{
         //get end price for the previous round / start price for the current round
         //betting end for the current round and start for the next round
+
+        require(block.timestamp > poolRecords[currentPoolID].startTime + timeFrame);
         currentPoolID += 1;
-        uint _endBlock = block.number;
-        uint _endPrice = getPrice(_endBlock);
+        uint _endTime = block.number;
+        uint _endPrice = getPrice(_endTime);
         
         
         poolRecords[currentPoolID-2].endPrice = _endPrice;
-        poolRecords[currentPoolID-2].endBlock = _endBlock;
+        poolRecords[currentPoolID-2].endTime = _endTime;
         poolRecords[currentPoolID-2].status = Status.COMPLETED;
         poolRecords[currentPoolID-1].startPrice = _endPrice;
-        poolRecords[currentPoolID-1].startBlock = _endBlock;
+        poolRecords[currentPoolID-1].startTime = _endTime;
         poolRecords[currentPoolID-1].status = Status.PENDING;
         poolRecords[currentPoolID].status = Status.BETTING;
         
@@ -207,6 +209,12 @@ contract BPool {
         // require(claimable > 0, "No Reward to Claim");
         // token.mint(msg.sender, claimable);
         // token.transfer(msg.sender, claimable);
+    }
+
+    function claimAll() public returns(uint claimable) {
+
+
+      return 0;
     }
 
     function getClaimable() public view returns(uint256) {
