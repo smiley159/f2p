@@ -10,8 +10,8 @@ contract BPool {
 
     address public owner; // onwer of contract
     address token_; // Accepted token of this pool
-    BNB token;
-    Blt bltUp;
+    BNB token; // Not really BNB just an ERC20 with no name yet
+    Blt bltUp; // ERC1155
     Blt bltDown;
 
     //Structure
@@ -36,8 +36,14 @@ contract BPool {
 
     //Parameters
 
-    uint public currentPoolID = 1; // current round of binary pool
-    uint public alpha; // ratio of wining minting rewards reroutig to burn
+    uint public currentPoolID = 1; // current round of pool
+    uint public alpha;
+    // alpha = (1 - burningRate - winningProbability)/winningProbability
+    // alpha is a parameter that adjust the minting rewards in order to make sure that the token has a deflationary behavior
+    // is a ratio ranging from 0 to 1
+    // token minting of winning bet = bet*alpha
+    // alpha will guarantee in long run that minting will be less than burning
+
     uint256 public burningRate; // Intended Burning rate of total betting per round 
     uint256 public treasuriesFee; // Portion of Burning that goes to treasuries
     uint256 public timeFrame; // Minimum secondes required to start a new round
@@ -66,10 +72,10 @@ contract BPool {
         token = BNB(_token); // ERC20 token use for betting
         bltUp = Blt(_bltUp); // ERC1155 token use for representing betUp amount each round
         bltDown = Blt(_bltDown); // ERC1155 token use for representing betUp amount each round
-        burningRate = 5; // 5 percent of total pot will be burn each round
-        totalWin = 10000; // seeding value to avoid extreme case eg.divide by zero
+        burningRate = 5; // 5 percent of total pot to be burn each round
+        totalWin = 10000; // seeding posterior statistic to avoid initial skewed case or divide by zero  
         totalLose = 10000; 
-        timeFrame = 1; // 1 Second for now
+        timeFrame = 1; // Timeframe for each round ,shoud be 60 secs/ 1 mins / 1 hour / 1 days etc..
 
     }
 
@@ -80,68 +86,74 @@ contract BPool {
     }
 
     function updateAlpha() internal  {
-        // uint pWin = totalWin/(totalWin+totalLose);
+        
         emit Log("Total Win",totalWin);
         emit Log("Total Lose",totalLose);
+       
        
         uint pWin = totalWin*100/(totalWin+totalLose);
         alpha = 100*(100-burningRate-pWin)/pWin;
 
         emit Alpha(alpha);
 
-
-      
     }
+
 
     function endCurrentRound() public{
         //get end price for the previous round / start price for the current round
         //betting end for the current round and start for the next round
+        //anyone can call this function but only valid after the "Timeframe" has passed since round started
 
         require(block.timestamp > poolRecords[currentPoolID].startTime + timeFrame);
+        
+        
         currentPoolID += 1;
+        //If pool ID < 2 poolID-2 will get index out of bound
+        require(currentPoolID >= 2,"Invalid poolID");
+
         uint _endTime = block.number;
         uint _endPrice = getPrice(_endTime);
         
-        
+        // Update endp rice for previous 2 round
         poolRecords[currentPoolID-2].endPrice = _endPrice;
         poolRecords[currentPoolID-2].endTime = _endTime;
         poolRecords[currentPoolID-2].status = Status.COMPLETED;
+
+        //Update start Price for previous round
         poolRecords[currentPoolID-1].startPrice = _endPrice;
         poolRecords[currentPoolID-1].startTime = _endTime;
         poolRecords[currentPoolID-1].status = Status.PENDING;
+
+        //Start new round, accept betting
         poolRecords[currentPoolID].status = Status.BETTING;
         
-
-        if(currentPoolID >= 2){
-            
-
-            //Update Parameter
-
-            bool isUpWin = getPoolResult(currentPoolID-2);
-            if(isUpWin){
-                totalWin +=  poolRecords[currentPoolID-2].totalBetUp;
-                totalLose +=  poolRecords[currentPoolID-2].totalBetDown;
-            }else{
-                totalWin +=  poolRecords[currentPoolID-2].totalBetDown;
-                totalLose +=  poolRecords[currentPoolID-2].totalBetUp;
-            }
-
-             burnLosingToken(currentPoolID-2);
-             
-             updateAlpha();
-             poolRecords[currentPoolID].alpha = alpha;
-
+        //get Pool Result of the ending round
+        bool isUpWin = getPoolResult(currentPoolID-2);
+        if(isUpWin){
+            totalWin +=  poolRecords[currentPoolID-2].totalBetUp;
+            totalLose +=  poolRecords[currentPoolID-2].totalBetDown;
+        }else{
+            totalWin +=  poolRecords[currentPoolID-2].totalBetDown;
+            totalLose +=  poolRecords[currentPoolID-2].totalBetUp;
         }
-        
-        
+
+          // All the losing bet get Burned, winning bet will be claimed by user
+          burnLosingToken(currentPoolID-2);
+
+          // update alpha parameter
+          updateAlpha();
+
+          //keep records of alpha for each round
+          poolRecords[currentPoolID].alpha = alpha;
 
         
-
+        
         
     }
 
     // user make a bet
     function bet(uint256 _amount, bool _up) public {
+
         require(
             token.allowance(msg.sender, address(this)) >= _amount,
             "Not authorized "
@@ -155,6 +167,7 @@ contract BPool {
             poolRecords[currentPoolID+1].totalBetUp += _amount;
             bltUp.mint(msg.sender,currentPoolID,_amount,"");
             emit betEvent("up", msg.sender, totalBetUp);
+
         } else {
         
             poolRecords[currentPoolID+1].totalBetDown += _amount;
@@ -162,6 +175,7 @@ contract BPool {
             emit betEvent("down", msg.sender, totalBetDown);
         }
     }
+
 
     function getPoolResult(uint _poolID) public view returns(bool){
         require(_poolID <= currentPoolID-2, "Pool not ended yet");
