@@ -50,14 +50,13 @@ function App() {
   }, [])
 
   return (
-    <div className="App" style={{ margin: 20 }}>
-      <Button onClick={() => ethEnabled()} basic color='orange'>
-        {state.web3Ready ? state.account : "connect"}
-      </Button>
-      <br></br>
-      <br></br>
+    <div className="App">
 
-      {state.web3Ready ? <Home /> : null}
+
+      {state.web3Ready ? <Home /> :
+        <Button onClick={() => ethEnabled()} basic color='orange'>
+          {state.web3Ready ? state.account : "connect"}
+        </Button>}
     </div>
   );
 }
