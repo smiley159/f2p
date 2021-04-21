@@ -1,13 +1,13 @@
-
+import { useEffect, useState, React } from 'react'
 import Home from './views/home.js'
 import { useDispatch, useSelector } from 'react-redux'
 import { Container, Button } from 'semantic-ui-react'
 
 import './App.css';
-import 'semantic-ui-css/semantic.min.css'
+
 
 import Web3 from 'web3';
-import { useEffect, useState, React } from 'react'
+
 
 
 

@@ -1,11 +1,9 @@
-import React from 'react'
-import paragraph from './paragraph.png';
+import { React } from 'react'
+import { useDispatch, useSelector } from "react-redux";
 import {
-  Checkbox,
   Grid,
   Header,
-  Icon,
-  Image,
+  Button,
   Menu,
   Segment,
   Sidebar,
@@ -13,27 +11,27 @@ import {
 
 import Tabs from './tabs.js'
 
-const SidebarExampleMultiple = () => {
-  const [visible, setVisible] = React.useState(false)
+function Home() {
+
+  let state = useSelector(state => state)
+
 
   return (
     <Grid columns={1} >
 
-      {/* <Grid.Column>
-        <Checkbox
-          checked={visible}
-          label={{ children: <code>visible</code> }}
-          onChange={(e, data) => setVisible(data.checked)}
-        />
-      </Grid.Column> */}
+
 
       <Grid.Column style={{ height: "100%", position: "absolute" }}>
         <Sidebar.Pushable as={Segment}  >
+          <div style={{ float: "right" }}>
+            <Button basic color='orange' style={{ marginTop: 10 }} >
+              {state.account}
+            </Button>
+          </div>
           <Sidebar
             as={Menu}
             animation='scale down'
             direction='left'
-            inverted
             vertical
             visible={true}
 
@@ -48,16 +46,20 @@ const SidebarExampleMultiple = () => {
           </Sidebar>
 
           <Sidebar.Pusher>
-            <Segment basic>
-              <Header as='h3'>Application Content</Header>
+            <Segment>
+              {/* <Header as='h3'>Address</Header> */}
               {/* <Image src={paragraph} /> */}
-              <Tabs></Tabs>
+
+              <Tabs />
+
+
             </Segment>
           </Sidebar.Pusher>
         </Sidebar.Pushable>
       </Grid.Column>
     </Grid>
   )
+
 }
 
-export default SidebarExampleMultiple
+export default Home

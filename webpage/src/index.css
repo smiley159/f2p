@@ -7,6 +7,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
@@ -14,4 +15,41 @@ code {
 
 .fullwidth {
   width: "100%";
+}
+
+.timer-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.timer {
+  font-family: "Montserrat";
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.text {
+  font-size: 15px;
+  color: #aaa;
+}
+
+/* .axd {
+  color: white;
+} */
+
+
+.value {
+  font-size: 25px;
+}
+
+.ui .segment {
+  padding: 0px !important;
+  border: 0px !important
+}
+
+
+
+.ui.visible.scale.down.sidebar~.pusher {
+  transform: scale(.8);
 }
