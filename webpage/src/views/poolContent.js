@@ -1,4 +1,5 @@
-import React from 'react'
+import { React, useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { Button, Grid, Header, Image, Segment } from 'semantic-ui-react'
 import { ProgressBar } from 'react-bootstrap'
 import triangle from './triangleIcon.png';
@@ -6,9 +7,53 @@ import Timer from './timer.js'
 
 const x = 54.32
 
-const ButtonExampleMultipleConditionals = () => {
+const PoolContent = (props) => {
+
+  const state = useSelector(state => state)
+  const [poolID, setPoolID] = useState(0)
+
+  const [startPrice, setStartPrice] = useState(0)
+  const [endPrice, setEndPrice] = useState(0)
+  const [startTime, setStartTime] = useState(0)
+  const [endTime, setEndTime] = useState(0)
+  const [totalBetUp, setTotalBetUp] = useState(0)
+  const [totalBetDown, setTotalBetDown] = useState(0)
+  const [countDown, setCountDown] = useState(0)
+  const [alpha, setAlpha] = useState(0)
+
+  const dispatch = useDispatch()
+
+  useEffect(() => {
+
+    updateCurrentRound()
+
+  }, [])
+
+  const updateCurrentRound = async () => {
+
+    let currentPoolID = await state.bPoolContract.methods.currentPoolID().call()
+    dispatch({ type: "setState", currentPoolID: currentPoolID })
+  }
 
 
+  const endCurrentRound = () => {
+    state.bPoolContract.methods.endCurrentRound().send({ from: state.account })
+      .then((res) => {
+        updateCurrentRound()
+      })
+  }
+
+  const getPoolInfo = async () => {
+    let poolInfo = await state.bPoolContract.methods.poolRecords(poolID).call()
+    setStartPrice(poolInfo.startPrice)
+    setEndPrice(poolInfo.endPrice)
+    setStartTime(poolInfo.startTime)
+    setEndTime(poolInfo.endTime)
+    setTotalBetUp(poolInfo.totalBetUp)
+    setTotalBetDown(poolInfo.totalBetDown)
+    setAlpha(poolInfo.alpha)
+    console.log("poolInfo", poolInfo)
+  }
 
   return (
     <div style={{ boxShadow: "10px 30px 10px 0px #9E9E9E" }}>
@@ -36,8 +81,10 @@ const ButtonExampleMultipleConditionals = () => {
           <Grid.Column width="5">
 
 
-            <h1> Predicting BTC/USDT Price</h1>
+            <h1> Predicting BTC/USDT Price Round {state.currentPoolID}</h1>
             <h2> And Earn 2X</h2>
+            <Button onClick={endCurrentRound}>End Round</Button>
+            <Button onClick={getPoolInfo}>get Price</Button>
             <br></br>
             <br></br>
             <Grid>
@@ -123,4 +170,4 @@ const ButtonExampleMultipleConditionals = () => {
   )
 }
 
-export default ButtonExampleMultipleConditionals
+export default PoolContent

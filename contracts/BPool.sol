@@ -30,8 +30,8 @@ contract BPool {
         Status status;
     }
 
-    mapping(uint => poolInfo) poolRecords;
-    mapping(address => uint[]) claimableArray;
+    mapping(uint => poolInfo) public poolRecords;
+    mapping(address => uint[]) public claimableArray;
     
 
     //Parameters

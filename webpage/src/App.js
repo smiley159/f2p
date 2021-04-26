@@ -2,6 +2,8 @@ import { useEffect, useState, React } from 'react'
 import Home from './views/home.js'
 import { useDispatch, useSelector } from 'react-redux'
 import { Container, Button } from 'semantic-ui-react'
+import BNB from './contracts/BNB.json';
+import BPool from './contracts/BPool.json'
 
 import './App.css';
 
@@ -46,14 +48,26 @@ function App() {
 
 
 
-  useEffect(() => {
-  }, [])
+  useEffect(async () => {
+    if (state.web3Ready) {
+      let _tokenContract = await new window.web3.eth.Contract(BNB.abi, BNB.networks["5777"].address)
+      let _bPoolContract = await new window.web3.eth.Contract(BPool.abi, BPool.networks["5777"].address)
+      dispatch({
+        type: "setState",
+        bPoolContract: _bPoolContract,
+        tokenContract: _tokenContract,
+        contractReady: true
+      })
+
+    }
+
+  }, [state.web3Ready])
 
   return (
     <div className="App">
 
 
-      {state.web3Ready ? <Home /> :
+      {(state.web3Ready && state.contractReady) ? <Home /> :
         <Button onClick={() => ethEnabled()} basic color='orange'>
           {state.web3Ready ? state.account : "connect"}
         </Button>}
