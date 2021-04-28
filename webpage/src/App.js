@@ -1,13 +1,15 @@
-
+import { useEffect, useState, React } from 'react'
 import Home from './views/home.js'
 import { useDispatch, useSelector } from 'react-redux'
-import { Container, Button } from 'semantic-ui-react'
+import { Button } from '@material-ui/core'
+import BNB from './contracts/BNB.json';
+import BPool from './contracts/BPool.json'
 
 import './App.css';
-import 'semantic-ui-css/semantic.min.css'
+
 
 import Web3 from 'web3';
-import { useEffect, useState, React } from 'react'
+
 
 
 
@@ -46,18 +48,29 @@ function App() {
 
 
 
-  useEffect(() => {
-  }, [])
+  useEffect(async () => {
+    if (state.web3Ready) {
+      let _tokenContract = await new window.web3.eth.Contract(BNB.abi, BNB.networks["5777"].address)
+      let _bPoolContract = await new window.web3.eth.Contract(BPool.abi, BPool.networks["5777"].address)
+      dispatch({
+        type: "setState",
+        bPoolContract: _bPoolContract,
+        tokenContract: _tokenContract,
+        contractReady: true
+      })
+
+    }
+
+  }, [state.web3Ready])
 
   return (
-    <div className="App" style={{ margin: 20 }}>
-      <Button onClick={() => ethEnabled()} basic color='orange'>
-        {state.web3Ready ? state.account : "connect"}
-      </Button>
-      <br></br>
-      <br></br>
+    <div className="App">
 
-      {state.web3Ready ? <Home /> : null}
+
+      {(state.web3Ready && state.contractReady) ? <Home /> :
+        <Button onClick={() => ethEnabled()} variant="outlined" color="primary">
+          {state.web3Ready ? state.account : "connect"}
+        </Button>}
     </div>
   );
 }

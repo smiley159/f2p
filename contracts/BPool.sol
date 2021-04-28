@@ -30,7 +30,8 @@ contract BPool {
         Status status;
     }
 
-    mapping(uint => poolInfo) poolRecords;
+    mapping(uint => poolInfo) public poolRecords;
+    mapping(address => uint[]) public claimableArray;
     
 
     uint256 public totalBetUp; // amount of token bet up
@@ -180,26 +181,41 @@ contract BPool {
 
     }
 
+     function getClaimable(uint _poolID) public view returns(bool,uint256,uint256) {
+        bool isUpWin = getPoolResult(_poolID);
+        uint poolAlpha = poolRecords[_poolID].alpha;
+        uint256 claimable;
+
+        
+        if (isUpWin) {
+            claimable = bltUp.balanceOf(msg.sender,_poolID);
+        } else {
+            claimable = bltDown.balanceOf(msg.sender,_poolID);    
+        }
+
+        uint256 mintable = claimable*poolAlpha/100;
+        return(isUpWin,claimable,mintable);
+    }
 
     function claim(uint _poolID) public returns(uint _claimable) { 
 
-        bool isUpWin = getPoolResult(_poolID);
-        uint poolAlpha = poolRecords[_poolID].alpha;
-        uint claimable;
+        require(_poolID <= currentPoolID -2, "round not ended yet");
+        bool isUpWin;
+        uint256 claimable;
+        uint256 mintable;
+        (isUpWin,claimable,mintable) = getClaimable(_poolID);
 
         
         if (isUpWin) {
             claimable = bltUp.balanceOf(msg.sender,_poolID);
             bltUp.burn(msg.sender,_poolID,claimable);
-            token.mint(msg.sender,claimable*poolAlpha/100);
+            token.mint(msg.sender,mintable);
             token.transfer(msg.sender,claimable);
         } else {
             claimable = bltDown.balanceOf(msg.sender,_poolID);
             bltDown.burn(msg.sender,_poolID,claimable);
-            token.mint(msg.sender,claimable*poolAlpha/100);
+            token.mint(msg.sender,mintable);
             token.transfer(msg.sender,claimable);
-            // claimable = betDownBalances[msg.sender];
-            // betDownBalances[msg.sender] = 0;
         }
 
         emit ClaimEvent(isUpWin,msg.sender,_poolID,claimable);
@@ -209,6 +225,7 @@ contract BPool {
         // token.transfer(msg.sender, claimable);
     }
 
+<<<<<<< HEAD
     function getClaimable() public view returns(uint256) {
         // uint256 claimable;
         // if (isUpWin) {
@@ -219,9 +236,23 @@ contract BPool {
 
         // return claimable * 2;
     }
+=======
+
+    function getAllCliamble() public returns(uint claimable) {
+
+     
+      return 0;
+    }
+
+ 
+>>>>>>> 3a215934dabc7b2d70f254f1221f8e9e8b0a9a40
 
     //return odd of the current betting pairs
-    function getBettingOdd() public {}
+    function getBettingOdd() public view returns(uint){
+      
+      uint odds = 100*totalWin/(totalWin+totalLose);
+      return (odds);
+    }
 
     // return total betting value in the pool
     function getBalance() public {}
