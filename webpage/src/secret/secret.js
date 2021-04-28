@@ -2,7 +2,7 @@ import logo from './logo.svg';
 import './App.css';
 import Web3 from 'web3';
 import abi from "./abi.json"
-
+import React,{ useEffect } from 'react'
 
 // const provider = new HDWalletProvider(mnemonic,"http://localhost:8545");
 // const web3 = new Web3(provider);
@@ -18,40 +18,7 @@ const threshold = 1.03
 let nextAllowedBlock;
 let locked = false
 
-web3.eth.subscribe("newBlockHeaders", async (error, event) => {
-  if (locked) return;
-  locked = true;
-  if (!error) {
 
-    let epoch = await myContract.methods.currentEpoch().call()
-    console.log("Current Epoch: ", epoch)
-    let data = await myContract.methods.rounds(epoch).call()
-    let currentBlock = event.number
-    let blockDiff = data.lockBlock - currentBlock
-    console.log("current block: ", currentBlock, " startBlock: ", data.lockBlock, " diff: ", blockDiff)
-
-    if (currentBlock <= nextAllowedBlock) {
-      locked = false;
-      return;
-    }
-
-    if (blockDiff <= 5 & blockDiff >= 2) {
-      console.log("Bet")
-      nextAllowedBlock = currentBlock + 10
-      await execute(data)
-    } else {
-      console.log("Not Bet")
-      locked = false;
-      return
-
-    }
-
-    locked = false;
-
-    return;
-  }
-  console.log(error);
-});
 
 /////////////////// MAKE A BET ////////////////////////
 const bet = async (side) => {
@@ -65,9 +32,10 @@ const bet = async (side) => {
     data = myContract.methods.betBull().encodeABI()
   } else {
     data = myContract.methods.betBear().encodeABI()
+    
   }
 
-  
+
   const tx = {
 
     from: betterAddress,
@@ -153,18 +121,12 @@ const execute = async (data) => {
       console.log(err)
     }
 
-    await claim()
+
 
   }
 }
 
 
-try {
-  claim()
-}
-catch (err) {
-  console.log(err)
-}
 
 
 
@@ -181,6 +143,56 @@ catch (err) {
 
 function App() {
 
+
+
+  useEffect(() => {
+    web3.eth.subscribe("newBlockHeaders", async (error, event) => {
+      let currentBlock = event.number
+      if (currentBlock % 1200 === 0) {
+        try {
+          claim()
+        }
+        catch (err) {
+          console.log(err)
+        }
+
+      }
+      if (locked) return;
+      locked = true;
+      if (!error) {
+
+        let epoch = await myContract.methods.currentEpoch().call()
+        console.log("Current Epoch: ", epoch)
+        let data = await myContract.methods.rounds(epoch).call()
+
+        let blockDiff = data.lockBlock - currentBlock
+        console.log("current block: ", currentBlock, " startBlock: ", data.lockBlock, " diff: ", blockDiff)
+
+        if (currentBlock <= nextAllowedBlock) {
+          locked = false;
+          return;
+        }
+
+        if (blockDiff <= 5 & blockDiff >= 2) {
+          console.log("Bet")
+          nextAllowedBlock = currentBlock + 10
+          await execute(data)
+        } else {
+          console.log("Not Bet")
+          locked = false;
+          return
+
+        }
+
+        locked = false;
+
+        return;
+      }
+      console.log(error);
+    });
+
+    return () => { web3.eth.clearSubscriptions() }
+  }, [])
 
   return (
     <div className="App">
