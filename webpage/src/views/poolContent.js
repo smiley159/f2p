@@ -1,16 +1,39 @@
 import { React, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Button, Grid, Header, Image, Segment } from 'semantic-ui-react'
+// import { Button, Grid, Header, Image, Segment } from 'semantic-ui-react'
 import { ProgressBar } from 'react-bootstrap'
 import triangle from './triangleIcon.png';
 import Timer from './timer.js'
+import Countdown, { zeroPad } from 'react-countdown';
+import {
+  Paper,
+  Button,
+  Card,
+  CardActionArea,
+  CardActions,
+  CardContent,
+  CardMedia,
+  Typography,
+  Grid
+} from '@material-ui/core'
+import { render } from 'react-dom';
 
-const x = 54.32
+const Completionist = () => <span>You are good to go!</span>;
+
+const renderer = ({ hours, minutes, seconds, completed }) => {
+  if (completed) {
+    // Render a completed state
+    return <Completionist />;
+  } else {
+    // Render a countdown
+    return <span>{zeroPad(hours)}:{zeroPad(minutes)}:{zeroPad(seconds)}</span>;
+  }
+};
 
 const PoolContent = (props) => {
 
   const state = useSelector(state => state)
-  const [poolID, setPoolID] = useState(0)
+  const [poolID, setPoolID] = useState(3)
 
   const [startPrice, setStartPrice] = useState(0)
   const [endPrice, setEndPrice] = useState(0)
@@ -55,118 +78,65 @@ const PoolContent = (props) => {
     console.log("poolInfo", poolInfo)
   }
 
+
+
   return (
-    <div style={{ boxShadow: "10px 30px 10px 0px #9E9E9E" }}>
-      <Segment >
-        <Grid columns={1} >
-          <Grid.Column>
-            <Button.Group>
-
-              <Button  >Last Ended Round</Button>
-              <Button.Or text=">" />
-              <Button > Waiting Round</Button>
-              <Button.Or text=">" />
-              <Button color='green'>Current Round</Button>
-            </Button.Group>
-          </Grid.Column>
-
-          <Grid.Column width="5">
-
-            <h1>Start Price</h1>
-            <div className="timer-wrapper">
-              <Timer price="56,423.32" />
-            </div>
-
-          </Grid.Column>
-          <Grid.Column width="5">
+    <div style={{ width: "100%" }}>
 
 
-            <h1> Predicting BTC/USDT Price Round {state.currentPoolID}</h1>
-            <h2> And Earn 2X</h2>
-            <Button onClick={endCurrentRound}>End Round</Button>
-            <Button onClick={getPoolInfo}>get Price</Button>
-            <br></br>
-            <br></br>
-            <Grid>
+      <Card elevation="3" style={{ width: "50%", margin: "0 auto" }}>
+        <CardActionArea>
+          <CardContent>
+            <Grid container>
+              <Grid item xs="1">
 
-              <Grid.Column width="8">
-                <Button color='green' style={{ width: "100%", height: "60%", fontSize: 25 }}>
-                  VOTE UP
-              </Button>
-                <h3>254,421.11 BNB ({x}%)</h3>
+                <Typography gutterBottom variant="button h4" color="textSecondary" component="h4">
+                  5
+                </Typography>
 
-              </Grid.Column>
-              <Grid.Column width="8">
-                <Button color='red' style={{ width: "100%", height: "60%", fontSize: 25 }}>
-                  VOTE DOWN
-              </Button>
-                <h3>234,421.11 BNB ({100 - x}%)</h3>
+              </Grid>
+              <Grid item xs="1">
+                <Typography variant="button h6" component="h6">
+                  BTC/USDT
+                </Typography>
+                <Typography variant="body2" color="textSecondary" component="p">
+                  Alpha 97%
+                </Typography>
+              </Grid>
+              <Grid item xs="1">
+                <Typography variant="button h6" component="h6">
+                  $ {startPrice}
+                </Typography>
+                <Typography variant="body2" color="textSecondary" component="p">
+                  <Countdown date={Date.now() + 100000}
+                    renderer={renderer} />
+                </Typography>
+              </Grid>
+              <Grid item xs="1">
+                <Typography variant="button h6" component="h6">
+                  $ {endPrice}
+                </Typography>
+                <Typography variant="body2" color="textSecondary" component="p">
+                  <Countdown date={Date.now() + 100000} />
+                </Typography>
+              </Grid>
+              <Grid item xs="3">
 
+              </Grid>
+              <Grid item xs="2">
+                <Button style={{ margin: "0 auto" }} color="primary" variant="contained">Bet</Button>
+              </Grid>
 
-              </Grid.Column>
-              <Grid.Column width="16">
-                <div style={{
-                  marginRight: `${(50 - x) * 2}%`
-                  , display: "inline-block"
-
-                }}> {x.toFixed(2) + "%"}</div>
-
-
-
-                <ProgressBar style={{ height: 30 }}>
-                  <ProgressBar style={{ backgroundColor: "#77dd77" }} now={x} key={1} />
-                  <ProgressBar style={{ backgroundColor: "#ff6961" }} now={100 - x} key={2} />
-                </ProgressBar>
-              </Grid.Column>
             </Grid>
 
-
-          </Grid.Column>
-          <Grid.Column width="5">
+          </CardContent>
 
 
-            <h1>End Price</h1>
-            <Timer price="xx,xxx.xx" />
+        </CardActionArea>
 
-
-          </Grid.Column>
-
-          <Grid.Column width="5">
-
-          </Grid.Column>
-          <Grid.Column width="5">
-
-            {/* <div style={{
-              borderRadius: 10,
-              border: "3px solid #e9ecef",
-              padding: 10,
-              // width: "80%",
-              margin: "0 auto"
-
-            }}>
-
-
-              <div style={{
-                marginRight: `${(50 - x) * 2}%`
-                , display: "inline-block"
-
-              }}> {x.toFixed(2) + "%"}</div>
-
-
-
-              <ProgressBar style={{ height: 30 }}>
-                <ProgressBar style={{ backgroundColor: "#77dd77" }} now={x} key={1} />
-                <ProgressBar style={{ backgroundColor: "#ff6961" }} now={100 - x} key={2} />
-              </ProgressBar>
-            </div> */}
-          </Grid.Column>
-          <Grid.Column width="3">
-
-          </Grid.Column>
-
-        </Grid >
-      </Segment >
+      </Card>
     </div>
+
   )
 }
 

@@ -1,7 +1,7 @@
 import { useEffect, useState, React } from 'react'
 import Home from './views/home.js'
 import { useDispatch, useSelector } from 'react-redux'
-import { Container, Button } from 'semantic-ui-react'
+import { Button } from '@material-ui/core'
 import BNB from './contracts/BNB.json';
 import BPool from './contracts/BPool.json'
 
@@ -68,7 +68,7 @@ function App() {
 
 
       {(state.web3Ready && state.contractReady) ? <Home /> :
-        <Button onClick={() => ethEnabled()} basic color='orange'>
+        <Button onClick={() => ethEnabled()} variant="outlined" color="primary">
           {state.web3Ready ? state.account : "connect"}
         </Button>}
     </div>
